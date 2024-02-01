@@ -1,0 +1,9 @@
+2DA V2.0
+
+ Label Cost Type Spell
+0 item_gem_body_III 3800 gems ****
+1 item_gem_body_II 10 gems ****
+2 ITEM_INVALID 0 **** ****
+3 item_gem_body_I 200 gems ****
+ice_gem Gem_of_Ice 25.8 gems winter_storm
+fire_gem Gem_of_Fire 80 gems fire_storm
