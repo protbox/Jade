@@ -1,5 +1,5 @@
 # What is 2DA?
-Two-dimensional Array (or 2DA) is a format used in Bioware games, such as SWOTR, Jade Empire, NWN, etc. It's generally a plain text file with 
+Two-dimensional Array (or 2DA) is a format used in Bioware games, such as SWTOR, Jade Empire, NWN, etc. It's generally a plain text file with 
 a very simple structure, so it's easy to manually edit/create. The only downside is there's no spaces in strings as spaces are used to denote the end of a field.
 A typical 2DA will look like this
 
