@@ -141,7 +141,9 @@ function Jade:add(key, tbl)
     self.data[newIndex] = { __id = newIndex }
     for _,v in ipairs(self.columns) do
         if tbl[v] then
-            self.data[newIndex][v] = tbl[v]
+            local val = tbl[v]
+            if type(val) == "string" then val = val:gsub(" ", "_") end
+            self.data[newIndex][v] = val
         else
             self.data[newIndex][v] = "****"
         end
