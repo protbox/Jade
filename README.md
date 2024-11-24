@@ -1,21 +1,28 @@
-# What is 2DA?
-Two-dimensional Array (or 2DA) is a format used in Bioware games, such as SWTOR, Jade Empire, NWN, etc. It's generally a plain text file with 
-a very simple structure, so it's easy to manually edit/create. The only downside is there's no spaces in strings as spaces are used to denote the end of a field.
-A typical 2DA will look like this
+# What is Jade?
+Originally Jade started out as a simple 2DA file reader/writer. It became cumbersome managing multiple files, so I overhauled its design, allowing for multiple tables in a single file.
+If you're too lazy to look in the data/test.db, the format of a Jade database looks like this
 
 ```
-2DA V2.0
+@Spells
 
-                Type    DamageNum   Duration
-fire_storm      Flame   20          2
-winter_storm    Ice     5           6
+Label    Type Value Mana Element 
+cut      atk  2     **** ****    
+slash    atk  1     **** ****    
+aegis    def  1     **** ****    
+leech    life 2     3    soul    
+Fireball atk  3     4    fire    
+
+@Items
+
+Label         Type   Consumable Value 
+health_potion life   true       5     
+mana_potion   mana   true       10    
+Big_Axe       weapon ****       60 
 
 ```
 
-First line is the prologue which says which version to use. Currently Jade only supports 2.0. A blank line follows, then it moves onto the columns. The first column must be blank, as that's where the id/key for each row will be held. Each word after that is the column heading or label.
-Following that is your row data. As mentioned, you add the id/key first, then the values for each field. That's all there is to it! Think of it like a spreadsheet.
-
-You can use Jade to modify bioware games (many items/abilities and appearances are located in these 2da files, so you can modify the game to some extent). It can also be used for your own game as a small database
+Tables are defined with @TableName. Then a newline is required. Following this, are the fields (or columns), then below them are the rows (values). It's a very simple design that makes it a cinch to hand edit, which is why I created it.
+The biggest downside is whitespace is reserved to denote the end of a field, so you'll need to use underscores instead. You can use `jade.to_str()` to replace underscores with spaces for a more readable string if you wish.
 
 # Usage
 
@@ -25,123 +32,72 @@ For starters, we load Jade. I'll just assume Jade.lua is in a directory called `
 local jade = require "lib.Jade"
 ```
 
-Now we need to load the table we want
+Now we need to load the database file
 
 ```lua
-local items = jade.load("data/items.2da")
+local db = jade.load("data/test.db")
 ```
 
-It's possible to just loop over every row in the table. The following snippet uses `enumerate` to iterate over the table and expose a row. It will then print the Label field of each row.
+Now you'll want to get some data out of it. This library maps data into objects called a ResultSet. It can easily be achieved like so:
 
 ```lua
-items:enumerate(function(row)
-    print(row.Label)
+local item_rs = db:resultset("Items")
+```
+
+This stores all the contents of the Items table into a lua object. We can now do stuff with it.
+
+## Fetching results
+
+There's two main ways to fetch results. Using `fetch` or `search`. `fetch` returns just one row, while `search` is designed to retrieve multiple as a ResultSet, and even allows for partial matching.
+
+Fetch can have two arguments. If you just supply one, it will fetch the row based on its index. If you supply two, it will try to find a row that matches Key = Value.
+For example
+
+```lua
+local row = item_rs:fetch(2) -- gets the row with index 2
+local row = item_rs:fetch("Type", "chair") -- fetches the first row that the column "Type" has a value of "chair"
+
+-- you can now use it as you would any other lua table
+print(row.Label, row.Type)
+```
+
+Search requires 2 arguments. A column name and value (or partial value)
+```lua
+-- grab all rows where their column values contain the string _potion
+local rs = item_rs:search("Label", "_potion")
+```
+
+## What can I do with a ResultSet?
+
+Well, we've seen searching already. You can loop over them with enumerate.
+
+```lua
+rs:enumerate(function(row)
+    print(row.Label, row.Value, row.Type)
 end)
 ```
 
-## Searching
-
-If you know specifically which row you want, you can fetch it using its id/key
+Or, if you wish, add a brand new row to the resultset
 
 ```lua
-local item = items:fetch("fire_gem")
+rs:add({ Label = "Foo", Value = 7 })
 ```
+Any columns you missed will be saved as `****` which is `nil` in Lua. Don't worry, your results in Lua will be converted to proper Lua types. It's only stored like that in the database file.
 
-However, we don't always know what the user wants, so we can use `search` to narrow it down based on the field(s) and values they are looking for.
+## Syncing
+
+If you've made any changes or added new rows, you may want to write it to file. You can do that with `db:sync()`
 
 ```lua
-local item_rs = items:search({ Label = "Gem_of_Fire" })
+local db = jade.load("data/test.db")
+local item_rs = db:resultset("Items")
 
--- we can search for more than one field
-local item_rs = items:search({ Type = "gems", Cost = 5 })
+-- grab the row with Big_Axe
+local axe = item_rs:fetch("Label", "Big_Axe")
+-- maybe we want to make it little axe
+axe.Label = "Little_Axe"
+
+-- add a new weapon to items
+item_rs:add({ Label = "Staff", Value = 25, Type = "weapon" })
 ```
-
-Jade also allows for partial matching. Simply add a % at the end of the value string
-
-```lua
-local item_rs = items:search({ Type = "gem%" })
-
--- you can use :count or simply #item_rs to get the number of results found
-print("Found " .. item_rs:count() .. " result(s)")
-```
-
-If you're expecting a single result, you can use find. It will perform a search then return `:first()` which plucks out the first result.
-
-```lua
-local item = items:find({ Label = "Gem_of_Fire" })
-```
-
-# Modifying tables
-
-You can create a new file, add new rows and remove rows from a 2DA file with Jade.
-To create a new file we simply:
-
-```lua
-local newfile = jade.createNew("data/filename.2da", { "Field1", "Field2", "Field3" })
-```
-
-It's not much use without rows, so let's add some:
-
-```lua
-newfile:add("key", { Field1 = "value1", Field2 = "value2" })
-```
-
-If the number of values don't match the number of columns, don't worry. It will replace any empty values with `****`, which is basically nil in 2da world.
-Removing a row is a simple matter of calling `:remove(key)` on the file
-
-```lua
-items:remove("fire_gem")
-```
-
-It's important to note that, while the changes are saved in memory, they are not saved in the file itself. To write everything we've changed, call `sync`
-
-```lua
-newfile:sync()
-```
-
-**NOTE:** If you modify any rows and call sync, it will save them to the file as well. For example:
-
-```lua
-local item = items:fetch("some_id")
-item.Label = "Bazinga"
-items:sync()
-```
-This will write some_id's new Label field as Bazinga in the items file.
-
-# Referencing other tables
-
-Sometimes you may want a way to link two tables together. For example, you may have an item table, but you want the enchantment effect in a separate table. The `ref` method attached to rows offers such an ability.
-
-```lua
--- enchantments will be located in spells
-local spells = jade.load("data/spells.2da")
-local items = jade.load("data/items.2da")
-
--- first grab your row using fetch/find/search
-local gem = items:fetch("ice_gem")
-
--- ref has two parameters. first is the table you wish to reference, the second is the field name where the reference key resides in the active table
-local spell = gem:ref(spells, "Spell")
-```
-
-That's it! `ref` will attempt to find a row in the spells table that matches the key located in the Spell field of our gem row. If you're still confused, please check out the example 2das in the data directory.
-
-# Chaining
-
-The beauty of Jade (imho) is the ability to chain methods onto each other. Let's fix up an example using everything we've learned so far, but with chaining.
-
-```lua
-items:search({ Type = "gem%" })
-    :enumerate(function(row)
-        local sp = row:ref(spells, "Spell")
-        if sp then
-            print(row.Label .. ": " .. sp.Type)
-        end
-    end)
-```
-
-What this does is perform a partial matching search for any "Type" field that begins with the value "gem". It then loops over each of the rows it finds and grabs the spell reference. If it finds one, it will print out the label of the current row and its corresponding spell type from the spells table.
-
-# Conclusion
-
-While using other formats, such as json/lua tables may make more sense, Jade offers a far simpler format with useful search features.
+So far, we've just changed it in memory, so it's still available to use but isn't physically written anywhere. Once we call `db:sync()`, Jade will rewrite the entire file with all your adjustments. SO BE CAREFUL, ESCPECIALLY WHEN CHANGING VALUES. If you want to make a temporary change, store the value of the row into a local variable instead of overwriting the original.
