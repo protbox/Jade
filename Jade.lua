@@ -77,6 +77,30 @@ function Jade.load(filename, replace_underscores_with_spaces)
     return setmetatable(db, Jade_mt)
 end
 
+-- returns a list of table names
+function Jade:get_table_names()
+    local tbls = {}
+    for name,_ in pairs(self.tables) do
+        table.insert(tbls, name)
+    end
+
+    return tbls
+end
+
+-- converts a value like apples, oranges, pineapple
+-- to a lua table
+function Jade.as_array(inp)
+    local t = {}
+    for str in string.gmatch(inp, "([^,]+)") do
+        if tonumber(str) then
+            str = tonumber(str)
+        end
+        table.insert(t, str)
+    end
+
+    return t
+end
+
 -- syncs the data in memory back to the database file
 -- WARNING: will overwrite everything, so make sure this is what you want to do
 function Jade:sync()
@@ -143,7 +167,7 @@ function Jade:add_table(name, fields)
     if not has_label then
         error("add_table expects a Label column")
     end
-    
+
     self.tables[name] = { columns = fields, rows = {} }
 
     return JResultSet.new(self.tables[name])

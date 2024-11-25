@@ -41,5 +41,30 @@ new_tbl:add({ Label = "foo_bar", Name = "Foo to the bar" })
 -- count should return 1
 print(new_tbl:count())
 
+local all_tables = db:get_table_names()
+for _,name in ipairs(all_tables) do
+    print(name)
+end
 -- write everything to file
 --db:sync()
+
+-- create new table with a list of columns
+local actor_rs = db:add_table("Actors", { "Label", "Name", "Spells", "Items" })
+-- add a new row to the new actors resultset
+local new_actor = actor_rs:add({
+    Label = "hero_001",
+    Name = "Polter the Grand",
+    Spells = "1,2,3,4",
+    Items = "1,2"
+})
+
+-- turn the spells field into a lua table, ie: "1,2,3,4" -> { 1, 2, 3, 4 }
+local skills_as_arr = jade.as_array(new_actor.Spells)
+print(new_actor.Name .. " has spells:")
+for _,spell_id in ipairs(skills_as_arr) do
+    -- fetch row with index spell_id from the spells table
+    local spell = spells:fetch(spell_id)
+    if spell then
+        print(spell.Label)
+    end
+end
