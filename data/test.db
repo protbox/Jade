@@ -1,3 +1,10 @@
+@Items
+
+Label         Name            Type      Consumable Value 
+health_potion Health_Potion   life      true       5     
+mana_potion   Mana_Potion     mana      true       10    
+Big_Axe       Really_Big_Axe  weapon    ****       60      
+
 @Spells
 
 Label    Type Value Mana Element 
@@ -6,12 +13,4 @@ slash    atk  1     **** ****
 aegis    def  1     **** ****    
 leech    life 2     3    soul    
 Fireball atk  3     4    fire    
-
-@Items
-
-Label         Type   Consumable Value 
-health_potion life   true       5     
-mana_potion   mana   true       10    
-Big_Axe       weapon ****       60    
-foo           yep    ****       7     
 

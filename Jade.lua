@@ -7,7 +7,7 @@ local function trim(s)
 end
 
 -- parses the filename supplied and parses it, turning it into lua tables
-function Jade.load(filename)
+function Jade.load(filename, replace_underscores_with_spaces)
     local db = { tables = {}, filename = filename }
     local current_table = nil
 
@@ -59,6 +59,11 @@ function Jade.load(filename)
                         value = tonumber(value)
                     end
 
+                    -- do not convert Label field
+                    if replace_underscores_with_spaces and col_name ~= "Label" then
+                        if type(value) == "string" then value = value:gsub("_", " ") end
+                    end
+
                     row[col_name] = value
                     i = i + 1
                 end
@@ -103,6 +108,7 @@ function Jade:sync()
             for i, col in ipairs(t.columns) do
                 local val = row[col] or "****"
                 val = tostring(val)
+                val = val:gsub("%s+", "_")
                 str = str .. val .. string.rep(" ", col_widths[i] - #val + 1)
             end
             str = str .. "\n"
@@ -126,6 +132,23 @@ function JResultSet.new(tbl)
     return setmetatable(tbl, JResultSet_mt)
 end
 
+function Jade:add_table(name, fields)
+    local has_label = false
+    for _,col in ipairs(fields) do
+        if col == "Label" then
+            has_label = true
+        end
+    end
+
+    if not has_label then
+        error("add_table expects a Label column")
+    end
+    
+    self.tables[name] = { columns = fields, rows = {} }
+
+    return JResultSet.new(self.tables[name])
+end
+
 -- shortcut for looping through rows
 function JResultSet:enumerate(fn)
     for _,row in ipairs(self.rows) do
@@ -138,6 +161,8 @@ function JResultSet:first()
     return self.rows[1]
 end
 
+function JResultSet:count() return #self.rows end
+
 -- adds a new row to the resultset
 -- rs:add({ Label = "Foo", Type = "Blah"})
 -- you don't need to supply every column, so don't worry
@@ -148,7 +173,7 @@ function JResultSet:add(tbl)
         if tbl[col] then
             -- if value contains a space, convert it to underscores
             local val = tbl[col]
-            if type(val) == "string" then val = val:gsub(" ", "_") end
+            if col == "Label" and type(val) == "string" then val = val:gsub(" ", "_") end
             newrow[col] = val
             newentries = newentries + 1
         else

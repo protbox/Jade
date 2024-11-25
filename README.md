@@ -36,6 +36,10 @@ Now we need to load the database file
 
 ```lua
 local db = jade.load("data/test.db")
+
+-- optionally, you can pass true to load which will replace underscores with spaces
+-- except in the Label field
+local db = jade.load("data/test.db", true)
 ```
 
 Now you'll want to get some data out of it. This library maps data into objects called a ResultSet. It can easily be achieved like so:
@@ -84,7 +88,7 @@ rs:add({ Label = "Foo", Value = 7 })
 ```
 Any columns you missed will be saved as `****` which is `nil` in Lua. Don't worry, your results in Lua will be converted to proper Lua types. It's only stored like that in the database file.
 
-## Syncing
+# Syncing
 
 If you've made any changes or added new rows, you may want to write it to file. You can do that with `db:sync()`
 
@@ -101,3 +105,19 @@ axe.Label = "Little_Axe"
 item_rs:add({ Label = "Staff", Value = 25, Type = "weapon" })
 ```
 So far, we've just changed it in memory, so it's still available to use but isn't physically written anywhere. Once we call `db:sync()`, Jade will rewrite the entire file with all your adjustments. SO BE CAREFUL, ESCPECIALLY WHEN CHANGING VALUES. If you want to make a temporary change, store the value of the row into a local variable instead of overwriting the original.
+
+# Creating new tables
+
+Yep, we can do that too. Simply call `db:add_table(table_name, {fields})`. Keep in mind Jade requires at least a Label field to use as a primary key.
+
+```lua
+local db = jade.load("data/test.db")
+local my_cool_table = db:add_table("CoolTable", {"Label", "Name"})
+
+-- we've got the new resultset, now let's add some data to it
+local new_row = my_cool_table:add({ Label = "cool_test_001", Name = "Really Cool Test" })
+print(new_row.Label .. ": " .. new_row.Name)
+
+-- when you're ready to write it to file
+db:sync()
+```
