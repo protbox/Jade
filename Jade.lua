@@ -6,6 +6,15 @@ local function trim(s)
     return s:match("^%s*(.-)%s*$")
 end
 
+-- converts a string to a lua type
+local function convert(str)
+    if tonumber(str) then return tonumber(str)
+    elseif str == "****" then return nil
+    elseif str == "true" then return true
+    elseif str == "false" then return false
+    else return str end
+end
+
 -- parses the filename supplied and parses it, turning it into lua tables
 function Jade.load(filename, replace_underscores_with_spaces)
     local db = { tables = {}, filename = filename }
@@ -51,13 +60,7 @@ function Jade.load(filename, replace_underscores_with_spaces)
                     end
 
                     -- we need to convert strings to valid lua types
-                    if value == "****" then
-                        value = nil
-                    elseif value == "true" or value == "false" then
-                        value = value == "true"
-                    elseif tonumber(value) then
-                        value = tonumber(value)
-                    end
+                    value = convert(value)
 
                     -- do not convert Label field
                     if replace_underscores_with_spaces and col_name ~= "Label" then
@@ -92,13 +95,16 @@ end
 function Jade.as_array(inp)
     local t = {}
     for str in string.gmatch(inp, "([^,]+)") do
-        if tonumber(str) then
-            str = tonumber(str)
-        end
+        str = convert(str)
         table.insert(t, str)
     end
 
     return t
+end
+
+function Jade.as_blob(inp)
+    local str = inp:gsub("\\n", "\r\n")
+    return str
 end
 
 -- syncs the data in memory back to the database file
@@ -164,8 +170,9 @@ function Jade:add_table(name, fields)
         end
     end
 
+    -- if no Label column was specified, prepend it
     if not has_label then
-        error("add_table expects a Label column")
+        table.insert(fields, 1, "Label")
     end
 
     self.tables[name] = { columns = fields, rows = {} }
@@ -214,7 +221,7 @@ function JResultSet:add(tbl)
 end
 
 -- fetches a single row from a resultset
--- if only one argument is present, it will attempt to fetch its index
+-- if only one argument is present, it will attempt to fetch based on Label
 -- if two arguments are supplied it will search based on key = value
 function JResultSet:fetch(key, val)
     if val then
@@ -226,22 +233,53 @@ function JResultSet:fetch(key, val)
 
         return false
     else
-        if self.rows[key] then
-            return self.rows[key]
-        else
-            return false
+        for _,row in ipairs(self.rows) do
+            if row.Label and row.Label == key then
+                return row
+            end
         end
+
+        return false
     end
 end
 
 -- searches the resultset for any rows matching key = val
 -- returns a resultset
-function JResultSet:search(key, val)
+function JResultSet:search(key, exp, val)
     local results = {}
     for _,row in ipairs(self.rows) do
         if row[key] then
+                -- perform expression check
+            if exp == ">" then
+                if row[key] and row[key] > val then
+                    match = true
+                end
+            elseif exp == ">=" then
+                if row[key] and row[key] >= val then
+                    match = true
+                end
+            elseif exp == "<" then
+                if row[key] and row[key] < val then
+                    match = true
+                end
+            elseif exp == "<=" then
+                if row[key] and row[key] <= val then
+                    match = true
+                end
+            elseif exp == "==" then
+                if not row[key] and val == "NULL" then
+                    match = true
+                elseif row[key] and row[key] == val then
+                    match = true
+                end
+            elseif exp == "%=" then
+                if row[key] and row[key]:find(val, 1, true) then
+                    match = true
+                end
+            end
+
             --if val == row[key] then
-            if row[key]:find(val, 1, true) then
+            if match then
                 table.insert(results, row)
             end
         end

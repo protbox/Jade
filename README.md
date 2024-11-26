@@ -54,22 +54,24 @@ This stores all the contents of the Items table into a lua object. We can now do
 
 There's two main ways to fetch results. Using `fetch` or `search`. `fetch` returns just one row, while `search` is designed to retrieve multiple as a ResultSet, and even allows for partial matching.
 
-Fetch can have two arguments. If you just supply one, it will fetch the row based on its index. If you supply two, it will try to find a row that matches Key = Value.
+Fetch can have two arguments. If you just supply one, it will fetch the row based on its Label. If you supply two, it will try to find a row that matches Key = Value.
 For example
 
 ```lua
-local row = item_rs:fetch(2) -- gets the row with index 2
+local row = item_rs:fetch("hero_001") -- gets the row where Label = "hero_001"
 local row = item_rs:fetch("Type", "chair") -- fetches the first row that the column "Type" has a value of "chair"
 
 -- you can now use it as you would any other lua table
 print(row.Label, row.Type)
 ```
 
-Search requires 2 arguments. A column name and value (or partial value)
+Search requires 3 arguments. A column name, an expression and value
 ```lua
--- grab all rows where their column values contain the string _potion
-local rs = item_rs:search("Label", "_potion")
+-- performs a partial match search
+local rs = item_rs:search("Label", "%=", _potion")
 ```
+
+Other expressions include `==`, `>`, `>=`, `<`, `<=`
 
 ## What can I do with a ResultSet?
 
@@ -108,7 +110,7 @@ So far, we've just changed it in memory, so it's still available to use but isn'
 
 # Creating new tables
 
-Yep, we can do that too. Simply call `db:add_table(table_name, {fields})`. Keep in mind Jade requires at least a Label field to use as a primary key.
+Yep, we can do that too. Simply call `db:add_table(table_name, {fields})`. Keep in mind Jade requires at least a Label field to use as a primary key. If you don't include it in `{fields}`, don't worry, Jade will push it to the front for you.
 
 ```lua
 local db = jade.load("data/test.db")

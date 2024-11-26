@@ -17,17 +17,17 @@ end)
 -- fetch a single row
 -- you can search for a particular index, or search based on a field and value
 -- local da_axe = items:fetch(3)
-local da_axe = items:fetch("Label", "Big_Axe")
+local da_axe = items:fetch("Big_Axe")
 print(da_axe.Name .. " does " .. da_axe.Value .. " damage")
 
 -- search performs a partial matching search and returns the results
 -- as a JResultSet object
-local potions = items:search("Label", "_potion")
+local potions = items:search("Label", "%=", "_potion")
 potions:enumerate(function(row)
     print(row.Label)
 end)
 
-local just_health = potions:fetch("Label", "health_potion")
+local just_health = potions:fetch("health_potion")
 print(just_health.Name .. " heals for " .. just_health.Value .. " HP")
 
 local foo = items:add({ Label = "foo nugget", Type = "something", Name = "Lil' Foo Nugget", Value = 7 })
@@ -49,12 +49,12 @@ end
 --db:sync()
 
 -- create new table with a list of columns
-local actor_rs = db:add_table("Actors", { "Label", "Name", "Spells", "Items" })
+local actor_rs = db:add_table("Actors", { "Name", "Spells", "Items" })
 -- add a new row to the new actors resultset
 local new_actor = actor_rs:add({
     Label = "hero_001",
     Name = "Polter the Grand",
-    Spells = "1,2,3,4",
+    Spells = "cut,slash,aegis,leech",
     Items = "1,2"
 })
 
@@ -68,3 +68,7 @@ for _,spell_id in ipairs(skills_as_arr) do
         print(spell.Label)
     end
 end
+
+local test_rs = db:resultset("TestBlob")
+local foo_test = test_rs:fetch("foo")
+print(jade.as_blob(foo_test.Text))
