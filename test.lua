@@ -28,6 +28,8 @@ powerups:add({ Label = "mushroom", Name = "Super Mushroom", Action = "Grow" })
 powerups:add({ Label = "fire_flower", Name = "Fire Flower", Action = "Shoot" })
 powerups:add({ Label = "poison_mushroom", Name = "Poison Mushroom", Action = "Hurt" })
 
+print("Found " .. powerups:count() .. " powerup(s)")
+
 -- search for everyone who loves Link and return a resultset
 local linklover_rs = people:search("Loves", "==", "Link")
 print(linklover_rs:count() .. " people love Link")

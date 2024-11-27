@@ -139,6 +139,8 @@ function Jade:sync()
         -- write rows with alignment
         for _, row in ipairs(t.rows) do
             for i, col in ipairs(t.columns) do
+                -- TODO:
+                -- need to check for other types such as nil, false, true
                 local val = row[col] or "****"
                 val = tostring(val)
                 str = str .. val
@@ -205,15 +207,19 @@ function JResultSet:count() return #self.rows end
 
 -- adds a new row to the resultset
 -- rs:add({ Label = "Foo", Type = "Blah"})
--- you don't need to supply every column, so don't worry
 function JResultSet:add(tbl)
 
+    -- make sure label is unique
     if tbl.Label then
         local findlabel = self:fetch(tbl.Label)
         if findlabel then
             print("[Jade]: Unable to add row. Label '" .. tbl.Label .. "' is not unique!")
             return false
         end
+    -- and make sure we actually have a label
+    else
+        print("[Jade]: Label field is required when adding a new row")
+        return false
     end
 
     local newrow = {}
