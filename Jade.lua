@@ -8,7 +8,8 @@ end
 
 -- converts a string to a lua type
 local function convert(str)
-    if tonumber(str) then return tonumber(str)
+    local is_num = tonumber(str)
+    if is_num then return is_num
     elseif str == "****" then return nil
     elseif str == "true" then return true
     elseif str == "false" then return false
@@ -165,6 +166,9 @@ function JResultSet.new(tbl)
     return setmetatable(tbl, JResultSet_mt)
 end
 
+-- add_table, well, it adds a new table
+-- supply it a name and a list of fields
+-- Label will be created if you don't include it
 function Jade:add_table(name, fields)
     local has_label = false
     for _,col in ipairs(fields) do
@@ -195,6 +199,8 @@ function JResultSet:first()
     return self.rows[1]
 end
 
+-- "shortcut" for returning the number of rows in a resultset
+-- tbh it just looks prettier
 function JResultSet:count() return #self.rows end
 
 -- adds a new row to the resultset
@@ -288,7 +294,7 @@ function JResultSet:search(key, exp, val)
                 end
             end
 
-            --if val == row[key] then
+            -- if match was flagged, add row to list of results
             if match then
                 table.insert(results, row)
             end
