@@ -74,6 +74,9 @@ function Jade.load(filename)
 end
 
 -- returns a list of table names
+-- you'll probably want to cache this somewhere as pairs isn't as fast as ipairs
+-- I may rewrite this so Jade caches the names for you instead of requiring this loop
+-- but don't worry, the API won't change!
 function Jade:get_table_names()
     local tbls = {}
     for name,_ in pairs(self.tables) do
@@ -95,6 +98,7 @@ function Jade.as_array(inp)
     return t
 end
 
+-- Returns a string containing newline characters as a multiline string
 function Jade.as_blob(inp)
     local str = inp:gsub("\\n", "\r\n")
     return str

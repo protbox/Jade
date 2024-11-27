@@ -21,6 +21,8 @@ end)
 -- Label is already created, but it's fine if you pass it as a field too
 local powerups = db:add_table("Powerups", { "Name", "Action" })
 
+-- after a sync (write to file), you can access Powerups with db:resultset("Powerups")
+
 -- add some rows to our new table
 powerups:add({ Label = "mushroom", Name = "Super Mushroom", Action = "Grow" })
 powerups:add({ Label = "fire_flower", Name = "Fire Flower", Action = "Shoot" })
@@ -35,6 +37,10 @@ linklover_rs:enumerate(function(row)
 	print(row.Name .. " loves Link")
 end)
 
+local table_names = db:get_table_names()
+for _,name in ipairs(table_names) do
+	print(name)
+end
 -- everything we have done so far is just in memory
 -- we're happy with the results, so let's write it to file
 --db:sync()
