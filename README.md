@@ -63,7 +63,7 @@ print(row.Label, row.Type)
 Search requires 3 arguments. A column name, an expression and value
 ```lua
 -- performs a partial match search
-local rs = item_rs:search("Label", "%=", _potion")
+local rs = item_rs:search("Label", "%=", "_potion")
 ```
 
 Other expressions include `==`, `>`, `>=`, `<`, `<=`
