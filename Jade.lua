@@ -57,6 +57,7 @@ function Jade.load(filename)
                     end
 
                     -- convert value to Lua types
+                    value = trim(value)
                     value = convert(value)
 
                     row[col_name] = value
@@ -196,13 +197,20 @@ function JResultSet:count() return #self.rows end
 -- rs:add({ Label = "Foo", Type = "Blah"})
 -- you don't need to supply every column, so don't worry
 function JResultSet:add(tbl)
+
+    if tbl.Label then
+        local findlabel = self:fetch(tbl.Label)
+        if findlabel then
+            print("[Jade]: Unable to add row. Label '" .. tbl.Label .. "' is not unique!")
+            return false
+        end
+    end
+
     local newrow = {}
     local newentries = 0
     for _,col in ipairs(self.columns) do
         if tbl[col] then
-            -- if value contains a space, convert it to underscores
             local val = tbl[col]
-            --if col == "Label" and type(val) == "string" then val = val:gsub(" ", "_") end
             newrow[col] = val
             newentries = newentries + 1
         else

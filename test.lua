@@ -6,7 +6,6 @@ local people = db:resultset("People")
 
 -- add a new row
 people:add({ Label = "person_02", Name = "Princess Peach", Town = "Mushroom Kingdom", Loves = "Link"})
-
 -- fetch the row where Label = person_02 and print their name
 print(people:fetch("person_02").Name)
 
@@ -38,4 +37,4 @@ end)
 
 -- everything we have done so far is just in memory
 -- we're happy with the results, so let's write it to file
-db:sync()
+--db:sync()
