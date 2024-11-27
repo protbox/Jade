@@ -1,22 +1,5 @@
-@Spells
+@People
 
-Label    Type Value Mana Element 
-cut      atk  2     **** ****    
-slash    atk  1     **** ****    
-aegis    def  1     **** ****    
-leech    life 2     3    soul    
-Fireball atk  3     4    fire    
-
-@Items
-
-Label         Name            Type      Consumable Value 
-health_potion Health_Potion   life      true       5     
-mana_potion   Mana_Potion     mana      true       10    
-Big_Axe       Really_Big_Axe  weapon    false      60    
-foo_nugget    Lil'_Foo_Nugget something false      7     
-
-@TestBlob
-
-Label   Text
-foo     This_is_a_multine\nstring_test\ndoes_it_work?
+Label		Name					Town				Loves	
+person_01 	Polt the Magnificent	Awesome Town		Link
 

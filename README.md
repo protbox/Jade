@@ -1,28 +1,26 @@
 # What is Jade?
-Originally Jade started out as a simple 2DA file reader/writer. It became cumbersome managing multiple files, so I overhauled its design, allowing for multiple tables in a single file.
-If you're too lazy to look in the data/test.db, the format of a Jade database looks like this
+Jade a TSV (Tab-Separated Values) database, of sorts. The main goal of Jade was creating a small and fast database format that could easily be edited by hand. It maps the data returned into objects for convenience, and when you write your changes to file it will align everything neatly for clarity
 
 ```
 @Spells
 
-Label    Type Value Mana Element 
-cut      atk  2     **** ****    
-slash    atk  1     **** ****    
-aegis    def  1     **** ****    
-leech    life 2     3    soul    
-Fireball atk  3     4    fire    
+Label    	Type 	Value 	Mana 	Element 
+cut      	atk  	2     	**** 	****    
+slash    	atk  	1     	**** 	****    
+aegis    	def  	1     	**** 	****    
+leech    	life 	2     	3    	soul    
+Fireball	atk  	3     	4    	fire    
 
 @Items
 
-Label         Type   Consumable Value 
-health_potion life   true       5     
-mana_potion   mana   true       10    
-Big_Axe       weapon ****       60 
+Label         	Type   	Consumable 	Value 
+health_potion 	life   	true       	5     
+mana_potion   	mana   	true       	10    
+Big_Axe       	weapon 	****       	60 
 
 ```
 
-Tables are defined with @TableName. Then a newline is required. Following this, are the fields (or columns), then below them are the rows (values). It's a very simple design that makes it a cinch to hand edit, which is why I created it.
-The biggest downside is whitespace is reserved to denote the end of a field, so you'll need to use underscores instead. You can use `jade.to_str()` to replace underscores with spaces for a more readable string if you wish.
+Tables are defined with @TableName. Then a newline is required. Following this, are the fields (or columns), then below them are the rows (values). It's a very simple design that makes it a cinch to hand edit, which is why I created it. Just remember that it uses tab stops as delimeters. Any other whitespace will not work!
 
 # Usage
 
@@ -99,7 +97,7 @@ local db = jade.load("data/test.db")
 local item_rs = db:resultset("Items")
 
 -- grab the row with Big_Axe
-local axe = item_rs:fetch("Label", "Big_Axe")
+local axe = item_rs:fetch("Big_Axe")
 -- maybe we want to make it little axe
 axe.Label = "Little_Axe"
 

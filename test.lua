@@ -1,74 +1,41 @@
 local jade = require "Jade"
--- passing true to load will convert all underscores to spaces
--- with the exception of the Label field, as this is used as a primary key
-local db = jade.load("data/test.db", true)
+local db = jade.load("data/test.db")
 
--- get_table returns a JResultSet object
-local spells = db:resultset("Spells")
-local items = db:resultset("Items")
+-- grab the People table and return a ResultSet
+local people = db:resultset("People")
 
-spells:enumerate(function(row)
-    -- is it magic?
-    if row.Mana then
-        print(row.Label .. " (" .. row.Element .. "): " .. row.Value)
-    end
+-- add a new row
+people:add({ Label = "person_02", Name = "Princess Peach", Town = "Mushroom Kingdom", Loves = "Link"})
+
+-- fetch the row where Label = person_02 and print their name
+print(people:fetch("person_02").Name)
+
+-- add a new row
+people:add({ Label = "person_03", Name = "Link", Town = "Kokori Forest"})
+
+-- loop through the People table
+people:enumerate(function(row)
+    print(row.Label .. ": " .. row.Name .. " is from " .. row.Town)
 end)
 
--- fetch a single row
--- you can search for a particular index, or search based on a field and value
--- local da_axe = items:fetch(3)
-local da_axe = items:fetch("Big_Axe")
-print(da_axe.Name .. " does " .. da_axe.Value .. " damage")
+-- add a new table
+-- Label is already created, but it's fine if you pass it as a field too
+local powerups = db:add_table("Powerups", { "Name", "Action" })
 
--- search performs a partial matching search and returns the results
--- as a JResultSet object
-local potions = items:search("Label", "%=", "_potion")
-potions:enumerate(function(row)
-    print(row.Label)
-end)
-
-local just_health = potions:fetch("health_potion")
-print(just_health.Name .. " heals for " .. just_health.Value .. " HP")
-
-local foo = items:add({ Label = "foo nugget", Type = "something", Name = "Lil' Foo Nugget", Value = 7 })
-print(foo.Label .. ": " .. foo.Name)
-
--- add a whole new table
--- returns a JResultSet
-local new_tbl = db:add_table("Test", { "Label", "Name" })
 -- add some rows to our new table
-new_tbl:add({ Label = "foo_bar", Name = "Foo to the bar" })
--- count should return 1
-print(new_tbl:count())
+powerups:add({ Label = "mushroom", Name = "Super Mushroom", Action = "Grow" })
+powerups:add({ Label = "fire_flower", Name = "Fire Flower", Action = "Shoot" })
+powerups:add({ Label = "poison_mushroom", Name = "Poison Mushroom", Action = "Hurt" })
 
-local all_tables = db:get_table_names()
-for _,name in ipairs(all_tables) do
-    print(name)
-end
--- write everything to file
---db:sync()
+-- search for everyone who loves Link and return a resultset
+local linklover_rs = people:search("Loves", "==", "Link")
+print(linklover_rs:count() .. " people love Link")
 
--- create new table with a list of columns
-local actor_rs = db:add_table("Actors", { "Name", "Spells", "Items" })
--- add a new row to the new actors resultset
-local new_actor = actor_rs:add({
-    Label = "hero_001",
-    Name = "Polter the Grand",
-    Spells = "cut,slash,aegis,leech",
-    Items = "1,2"
-})
+-- loop over the search results to see who loves Link
+linklover_rs:enumerate(function(row)
+	print(row.Name .. " loves Link")
+end)
 
--- turn the spells field into a lua table, ie: "1,2,3,4" -> { 1, 2, 3, 4 }
-local skills_as_arr = jade.as_array(new_actor.Spells)
-print(new_actor.Name .. " has spells:")
-for _,spell_id in ipairs(skills_as_arr) do
-    -- fetch row with index spell_id from the spells table
-    local spell = spells:fetch(spell_id)
-    if spell then
-        print(spell.Label)
-    end
-end
-
-local test_rs = db:resultset("TestBlob")
-local foo_test = test_rs:fetch("foo")
-print(jade.as_blob(foo_test.Text))
+-- everything we have done so far is just in memory
+-- we're happy with the results, so let's write it to file
+db:sync()

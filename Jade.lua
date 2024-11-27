@@ -15,8 +15,8 @@ local function convert(str)
     else return str end
 end
 
--- parses the filename supplied and parses it, turning it into lua tables
-function Jade.load(filename, replace_underscores_with_spaces)
+-- reads the file supplied and parses it, turning it into lua tables
+function Jade.load(filename)
     local db = { tables = {}, filename = filename }
     local current_table = nil
 
@@ -25,53 +25,45 @@ function Jade.load(filename, replace_underscores_with_spaces)
 
         if line:sub(1, 1) == "@" then
             -- start a new table & extract table name
-            current_table = line:sub(2):match("%S+") 
+            current_table = line:sub(2):match("%S+")
             db.tables[current_table] = { columns = {}, rows = {} }
         elseif current_table then
             local table_data = db.tables[current_table]
 
             if not next(table_data.columns) and line:find("%S") then
                 -- define the column headers
-                local has_label = false
                 table_data.columns = {}
-                for col in line:gmatch("%S+") do
-                    if col == "Label" then has_label = true end
+                for col in line:gmatch("[^\t]+") do
                     table.insert(table_data.columns, col)
                 end
 
-                -- not sure if I'll keep this
-                -- but essentially this means tables REQUIRE a Label field
-                -- I think it's a good thing to have a consistent field to refer to
-                if not has_label then
+                -- ensure the table has a Label column
+                -- labels are used as primary keys, so they can be really useful
+                if not table_data.columns[1] or table_data.columns[1] ~= "Label" then
                     error("Table '" .. current_table .. "' is missing Label")
                 end
             elseif line:find("%S") then
-                -- parse row data
+                -- parse row data using tabs as delimiters
                 if #table_data.columns == 0 then
                     error("No columns defined for table '" .. current_table .. "'")
                 end
 
                 local row = {}
                 local i = 1
-                for value in line:gmatch("%S+") do
+                for value in line:gmatch("[^\t]+") do
                     local col_name = table_data.columns[i]
                     if not col_name then
                         error("Mismatch between columns and row data in table '" .. current_table .. "'")
                     end
 
-                    -- we need to convert strings to valid lua types
+                    -- convert value to Lua types
                     value = convert(value)
-
-                    -- do not convert Label field
-                    if replace_underscores_with_spaces and col_name ~= "Label" then
-                        if type(value) == "string" then value = value:gsub("_", " ") end
-                    end
 
                     row[col_name] = value
                     i = i + 1
                 end
 
-                -- finally, append the row to the table
+                -- finally, add row to the table
                 table.insert(table_data.rows, row)
             end
         end
@@ -108,47 +100,53 @@ function Jade.as_blob(inp)
 end
 
 -- syncs the data in memory back to the database file
+-- will beautify it, making it easier to edit by hand, which is the whole point of Jade
 -- WARNING: will overwrite everything, so make sure this is what you want to do
 function Jade:sync()
     local str = ""
-    
+
     for name, t in pairs(self.tables) do
-        -- write table name
+        -- write the table name
         str = str .. "@" .. name .. "\n\n"
-        
-        -- determine column widths for padding
-        local col_widths = {}
+
+        -- calculate the required tabs for each column
+        local tab_stops = {}
         for i, col in ipairs(t.columns) do
             local max_width = #col
             for _, row in ipairs(t.rows) do
                 local val = row[col] or "****"
                 max_width = math.max(max_width, #tostring(val))
             end
-            col_widths[i] = max_width
+            -- convert width to the number of tabs required
+            -- I'm assuming 4 characters per tab for simplicity
+            tab_stops[i] = math.ceil((max_width + 1) / 4)
         end
 
-        -- write col names
+        -- write column names with alignment
         for i, col in ipairs(t.columns) do
-            str = str .. col .. string.rep(" ", col_widths[i] - #col + 1)
+            str = str .. col
+            local tabs_needed = tab_stops[i] - math.ceil((#col + 1) / 4)
+            str = str .. string.rep("\t", tabs_needed + 1)
         end
         str = str .. "\n"
 
-        -- write row vals
+        -- write rows with alignment
         for _, row in ipairs(t.rows) do
             for i, col in ipairs(t.columns) do
                 local val = row[col] or "****"
                 val = tostring(val)
-                val = val:gsub("%s+", "_")
-                str = str .. val .. string.rep(" ", col_widths[i] - #val + 1)
+                str = str .. val
+                local tabs_needed = tab_stops[i] - math.ceil((#val + 1) / 4)
+                str = str .. string.rep("\t", tabs_needed + 1)
             end
             str = str .. "\n"
         end
 
-        -- end table
+        -- end of table
         str = str .. "\n"
     end
 
-    -- write to file
+    -- finally, write the string output back to the file
     local fh = io.open(self.filename, "w")
     fh:write(str)
     fh:close()
@@ -204,7 +202,7 @@ function JResultSet:add(tbl)
         if tbl[col] then
             -- if value contains a space, convert it to underscores
             local val = tbl[col]
-            if col == "Label" and type(val) == "string" then val = val:gsub(" ", "_") end
+            --if col == "Label" and type(val) == "string" then val = val:gsub(" ", "_") end
             newrow[col] = val
             newentries = newentries + 1
         else
