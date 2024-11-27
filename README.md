@@ -35,9 +35,6 @@ Now we need to load the database file
 ```lua
 local db = jade.load("data/test.db")
 
--- optionally, you can pass true to load which will replace underscores with spaces
--- except in the Label field
-local db = jade.load("data/test.db", true)
 ```
 
 Now you'll want to get some data out of it. This library maps data into objects called a ResultSet. It can easily be achieved like so:
