@@ -270,6 +270,21 @@ function JResultSet:fetch(key, val)
     end
 end
 
+-- a more elegant solution would be to create a Row object and 
+-- pass the DB context around, but in the interest of keeping things lightweight
+-- this is how we're going to remove rows
+function JResultSet:remove(label)
+    for i,row in ipairs(self.rows) do
+        if row.Label == label then
+            table.remove(self.rows, i)
+            return true
+        end
+    end
+
+    -- return false if nothing was found and removed
+    return false
+end
+
 -- searches the resultset for any rows matching key = val
 -- returns a resultset
 function JResultSet:search(key, exp, val)

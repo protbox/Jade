@@ -85,6 +85,17 @@ rs:add({ Label = "Foo", Value = 7 })
 ```
 Any columns you missed will be saved as `****` which is `nil` in Lua. Don't worry, your results in Lua will be converted to proper Lua types. It's only stored like that in the database file.
 
+It's also possible to remove rows using their Label
+
+```lua
+local ok = rs:remove("foo") -- removes the row where Label = foo
+if ok then
+	print("foo was successfully removed")
+else
+	print("foo not removed. wrong Label perhaps?")
+end
+```
+
 # Syncing
 
 If you've made any changes or added new rows, you may want to write it to file. You can do that with `db:sync()`

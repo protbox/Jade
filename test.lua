@@ -43,6 +43,11 @@ local table_names = db:get_table_names()
 for _,name in ipairs(table_names) do
 	print(name)
 end
+
+-- delete the row from People where Label = person_02 (Peach)
+-- if you save it into a variable it will return true or false if the row was removed or not
+people:remove("person_02")
+
 -- everything we have done so far is just in memory
 -- we're happy with the results, so let's write it to file
 --db:sync()
