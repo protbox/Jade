@@ -10,7 +10,7 @@ people:add({ Label = "person_02", Name = "Princess Peach", Town = "Mushroom King
 print(people:fetch("person_02").Name)
 
 -- add a new row
-people:add({ Label = "person_03", Name = "Link", Town = "Kokori Forest"})
+people:add({ Label = "person_03", Name = "Link", Town = "Kokori Forest" })
 
 -- loop through the People table
 people:enumerate(function(row)

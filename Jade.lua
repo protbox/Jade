@@ -142,7 +142,10 @@ function Jade:sync()
             for i, col in ipairs(t.columns) do
                 -- TODO:
                 -- need to check for other types such as nil, false, true
-                local val = row[col] or "****"
+                local val = row[col]
+                if val == nil then val = "****"
+                elseif val == true then val = "true"
+                elseif val == false then val = "false" end
                 val = tostring(val)
                 str = str .. val
                 local tabs_needed = tab_stops[i] - math.ceil((#val + 1) / 4)
@@ -230,7 +233,7 @@ function JResultSet:add(tbl)
     local newrow = {}
     local newentries = 0
     for _,col in ipairs(self.columns) do
-        if tbl[col] then
+        if tbl[col] ~= nil then
             local val = tbl[col]
             newrow[col] = val
             newentries = newentries + 1
@@ -251,7 +254,8 @@ end
 -- if only one argument is present, it will attempt to fetch based on Label
 -- if two arguments are supplied it will search based on key = value
 function JResultSet:fetch(key, val)
-    if val then
+    if val ~= nil then
+        if val == "NULL" or val == "****" then val = nil end
         for _,row in ipairs(self.rows) do
             if row[key] == val then
                 return row
