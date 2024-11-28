@@ -20,8 +20,9 @@ end
 function Jade.load(filename)
     local db = { tables = {}, filename = filename }
     local current_table = nil
+    local iterator = love and love.filesystem.lines or io.lines
 
-    for line in io.lines(filename) do
+    for line in iterator(filename) do
         line = trim(line)
 
         if line:sub(1, 1) == "@" then
@@ -155,9 +156,13 @@ function Jade:sync()
     end
 
     -- finally, write the string output back to the file
-    local fh = io.open(self.filename, "w")
-    fh:write(str)
-    fh:close()
+    if love then
+        love.filesystem.write(self.filename, str)
+    else
+        local fh = io.open(self.filename, "w")
+        fh:write(str)
+        fh:close()
+    end
 end
 
 -- the ResultSet object (multiple rows)
