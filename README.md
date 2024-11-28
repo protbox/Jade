@@ -129,3 +129,7 @@ print(new_row.Label .. ": " .. new_row.Name)
 -- when you're ready to write it to file
 db:sync()
 ```
+
+# LÖVE
+
+If love is detected (love2d.org), Jade will use love's filesystem module instead of lua's io. This is to make life easier when fusing your game (and give you quick access to the save directory). You don't need to tell Jade or do anything differently - this library will handle everything for you under the hood. You're welcome.
